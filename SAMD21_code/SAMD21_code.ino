@@ -157,6 +157,7 @@ class imu_sensor {
         uint8_t channel;
         uint8_t sensor_id;
         Adafruit_BNO055 bno;
+        bool isConnected;
 
     public:
         imu_sensor(uint8_t sensor_id,uint8_t channel, uint8_t address)
@@ -170,6 +171,7 @@ class imu_sensor {
         void init()
         {
             byte value = 0;
+            Serial.println("==========================");
             Serial.print("Initalizing sensor ");
             Serial.print(this-> sensor_id);
             Serial.print("on port:");
@@ -179,7 +181,7 @@ class imu_sensor {
             Serial.println(" ");
 
             enableMuxPort(this->channel);
-            Serial.println("test:============");
+            Serial.println("WHOAMI register reply:");
             Wire.beginTransmission(this->address);
             Wire.write((uint8_t)0x00);
             Wire.endTransmission();
@@ -191,6 +193,12 @@ class imu_sensor {
               {
                 Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
                 Serial.println(" ");
+                this->isConnected= false;
+              }
+              else
+              {
+                this->isConnected= true;
+                Serial.println("This sensor is alive!");
               }
             disableMuxPort(this->channel);
         }
@@ -352,11 +360,14 @@ class imu_sensor {
 
         sensorOutputs read()
         {
-            enableMuxPort(this->channel);
+            sensorOutputs newOutputs;
+
+            if (this->isConnected)
+            {
+              enableMuxPort(this->channel);
 
 //            sensors_event_t eventA;
 //            bno.getEvent(&eventA);
-            sensorOutputs newOutputs;
 
 
 //            this is for test
@@ -391,6 +402,16 @@ class imu_sensor {
               newOutputs.w=(int)(quat.w()*10000);
 
             disableMuxPort(this->channel);
+            }
+            else
+            {
+//                Serial.println("no sensor:");
+              newOutputs.x=0;
+              newOutputs.y=0;
+              newOutputs.z=0;
+              newOutputs.w=1;
+            }
+
             return newOutputs;
         }
 
