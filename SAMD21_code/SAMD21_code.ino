@@ -358,6 +358,35 @@ class imu_sensor {
             //disableMuxPort(this->channel);
         }
 
+        sensorOutputs read_calibration_status()
+        {
+         sensorOutputs newOutputs;
+         enableMuxPort(this->channel);
+          /* Get the four calibration values (0..3) */
+          /* Any sensor data reporting 0 should be ignored, */
+          /* 3 means 'fully calibrated" */
+
+          uint8_t systemA, gyroA, accelA, magA;
+          systemA = gyroA = accelA = magA = 0;
+          bno.getCalibration(&systemA, &gyroA, &accelA, &magA);
+
+          /* Display the individual values */
+//          Serial.print("Sys'A':");
+//          Serial.print(systemA, DEC);
+//          Serial.print(" G'A':");
+//          Serial.print(gyroA, DEC);
+//          Serial.print(" A'A':");
+//          Serial.print(accelA, DEC);
+//          Serial.print(" M'A':");
+//          Serial.print(magA, DEC);
+           newOutputs.x=systemA;
+           newOutputs.y=gyroA;
+           newOutputs.z=accelA;
+           newOutputs.w=magA;
+          disableMuxPort(this->channel);
+          return newOutputs;
+        }
+
         sensorOutputs read()
         {
             sensorOutputs newOutputs;
@@ -409,7 +438,7 @@ class imu_sensor {
               newOutputs.x=0;
               newOutputs.y=0;
               newOutputs.z=0;
-              newOutputs.w=1;
+              newOutputs.w=10000;
             }
 
             return newOutputs;
@@ -653,6 +682,15 @@ void setup(void)
   Serial.println(buffer);
   //Serial.write(0x0D);
   //Serial.write(0x0A);
+  sensorOutputs cal9;
+  sensorOutputs cal8;
+  cal9=imu_sensor8.read_calibration_status();
+  cal8=imu_sensor8.read_calibration_status();
+
+  char buffer_cal[300];
+  sprintf(buffer_cal, "{ \"C8\":[%d,%d,%d,%d], \"C9\":[%d,%d,%d,%d]} ",cal8.x,cal8.y,cal8.z,cal8.w, cal9.x,cal9.y,cal9.z,cal9.w);
+  Serial.println(buffer_cal);
+  
 
 delay(BNO055_SAMPLERATE_DELAY_MS);
     
