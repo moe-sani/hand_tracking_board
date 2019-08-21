@@ -31,6 +31,10 @@
 #include "HX711.h"
 
 
+static const unsigned int SENSOR_UNDEFINED=0;
+static const unsigned int SENSOR_BNO055=1;
+static const unsigned int SENSOR_BNO080=2;
+
 
 //#include<EEPROM.h>
 
@@ -155,20 +159,25 @@ class imu_sensor {
     private:
         byte pinLED;
         uint8_t address;
+        uint8_t addressbno055;
+        uint8_t addressbno080;
         uint8_t channel;
         uint8_t sensor_id;
-        //Adafruit_BNO055 bno;
-        bool isConnected;
         BNO080 myIMU;
+        Adafruit_BNO055 bno;
+        bool isConnected;
+        unsigned int sensor_type;
 
     public:
-        imu_sensor(uint8_t sensor_id,uint8_t channel, uint8_t address)
+        //constructor
+        imu_sensor(uint8_t sensor_id,uint8_t channel, uint8_t addressbno055, uint8_t addressbno080)
         {
             this->channel=channel;
-            this->address=address;
+            this->addressbno055=addressbno055;
+            this->addressbno080=addressbno080;
             this-> sensor_id=sensor_id;
-//            bno = Adafruit_BNO055(sensor_id, address); /* A Sensor Address */
-
+            bno = Adafruit_BNO055(sensor_id, this->addressbno055); /* A Sensor Address */
+            this-> sensor_type= SENSOR_UNDEFINED;
         }
 
         void init()
@@ -192,16 +201,25 @@ class imu_sensor {
             value = Wire.read();
             Serial.println(value);         // print the character
             delay(500);
-            if(this->myIMU.begin(this->address,Wire) == false)
+            if(this->myIMU.begin(this->addressbno080,Wire) == true)
               {
-                Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
-                Serial.println(" ");
-                this->isConnected= false;
+                Serial.println("BNO080 is detected at this node!");
+                this->isConnected= true;
+                this->sensor_type=SENSOR_BNO080;
+              }
+              else if(bno.begin())
+              {
+                Serial.println("BNO055 is detected at this node!");
+                this->isConnected= true;
+                this->sensor_type=SENSOR_BNO055;
               }
               else
               {
-                this->isConnected= true;
-                Serial.println("This sensor is alive!");
+
+                Serial.print("Ooops, no BNO detected ... Check your wiring or I2C ADDR!");
+                Serial.println(" ");
+                this->isConnected= false;
+                this->sensor_type=SENSOR_UNDEFINED;
               }
             disableMuxPort(this->channel);
         }
@@ -221,73 +239,32 @@ class imu_sensor {
             Serial.println(" ");
             enableMuxPort(this->channel);
 
-          //Enable dynamic calibration for accel, gyro, and mag
-          this->myIMU.calibrateAll(); //Turn on cal for Accel, Gyro, and Mag
+            if (this->sensor_type == SENSOR_BNO080)
+            {
+                //Enable dynamic calibration for accel, gyro, and mag
+                this->myIMU.calibrateAll(); //Turn on cal for Accel, Gyro, and Mag
 
-          //Enable Game Rotation Vector output
-          this->myIMU.enableGameRotationVector(100); //Send data update every 100ms
+                //Enable Game Rotation Vector output
+                this->myIMU.enableGameRotationVector(100); //Send data update every 100ms
 
-          //Enable Magnetic Field output
-          this->myIMU.enableMagnetometer(100); //Send data update every 100ms
+                //Enable Magnetic Field output
+                this->myIMU.enableMagnetometer(100); //Send data update every 100ms
 
-          //Once magnetic field is 2 or 3, run the Save DCD Now command
-        //  Serial.println(F("Calibrating. Press 's' to save to flash"));
-        //  Serial.println(F("Output in form x, y, z, in uTesla"));
-            this->calibrationProcess();
+                //Once magnetic field is 2 or 3, run the Save DCD Now command
+                //  Serial.println(F("Calibrating. Press 's' to save to flash"));
+                //  Serial.println(F("Output in form x, y, z, in uTesla"));
+                this->calibrationProcess();
+            }
 
+            if(this->sensor_type == SENSOR_BNO055)
+            {
+                this->restorePredefinedCalibration();
 
-//            adafruit_bno055_offsets_t calibrationDataA;
-            // Read the content of "my_flash_store" into the "owner" variable
-//            calibrationDataA = my_flash_store.read();
-//            this->displaySensorOffsets(calibrationDataA);
+            }
 
-//            delay(500);
-//            sensor_t sensorA;
-
-            //bno.getSensor(&sensorA);
-
-            /* Display some basic information on this sensor A and B*/
-//            this->displaySensorDetails();
-
-            /* Optional: Display current status A and B*/
-            //this->displaySensorStatus();
-
-//            bno.setExtCrystalUse(true);
-
-//            sensors_event_t eventA;
-
-//            if(calibrationDataA.accel_offset_x==0)
-//            {
-//                Serial.println("Please Calibrate Sensor: ");
-//                while(!bno.isFullyCalibrated()){
-//                  bno.getEvent(&eventA);
-//                  Serial.print("X'A': ");
-//                  Serial.print(eventA.orientation.x, 4);
-//                  Serial.print("\tY'A': ");
-//                  Serial.print(eventA.orientation.y, 4);
-//                  Serial.print("\tZ'A':  ");
-//                  Serial.print(eventA.orientation.z, 4);
-
-//                  this->displayCalStatus();
-//                  Serial.println("");
-//                  delay(BNO055_SAMPLERATE_DELAY_MS);
-//                }
-                Serial.println("\n\nCalibration Is Done!");
-//                adafruit_bno055_offsets_t newCaliA;
-//                bno.getSensorOffsets(newCaliA);
-//                this->displaySensorOffsets(newCaliA);
-                // Save new calibration to arduino memory
-//                Serial.println("\n\nStoring calibration data to EEPROM...");
-
-//                my_flash_store.write(newCaliA);
-//            }
-//            else
-//            {
-//                bno.setSensorOffsets(calibrationDataA);
-//                Serial.println("Calibration data restored!");
-//            }
+            Serial.println("\n\nCalibration Is Done!");
             disableMuxPort(this->channel);
-            delay(1000);
+            delay(500);
             }
         }
         //Given a accuracy number, print what it means
@@ -391,6 +368,7 @@ class imu_sensor {
           }
           }
         }
+
         ///**************************************************************************/
         /*
             Displays some basic information on this sensor from the unified
@@ -480,103 +458,7 @@ class imu_sensor {
             //disableMuxPort(this->channel);
         }
 
-        sensorOutputs read_calibration_status()
-        {
-         sensorOutputs newOutputs;
-         enableMuxPort(this->channel);
-          /* Get the four calibration values (0..3) */
-          /* Any sensor data reporting 0 should be ignored, */
-          /* 3 means 'fully calibrated" */
 
-//          uint8_t systemA, gyroA, accelA, magA;
-//          systemA = gyroA = accelA = magA = 0;
-//          bno.getCalibration(&systemA, &gyroA, &accelA, &magA);
-
-          /* Display the individual values */
-//          Serial.print("Sys'A':");
-//          Serial.print(systemA, DEC);
-//          Serial.print(" G'A':");
-//          Serial.print(gyroA, DEC);
-//          Serial.print(" A'A':");
-//          Serial.print(accelA, DEC);
-//          Serial.print(" M'A':");
-//          Serial.print(magA, DEC);
-            
-           newOutputs.x=this->myIMU.getQuatRadianAccuracy();
-           newOutputs.y=this->myIMU.getQuatRadianAccuracy();
-           newOutputs.z=this->myIMU.getQuatRadianAccuracy();
-           newOutputs.w=this->myIMU.getQuatRadianAccuracy();
-          disableMuxPort(this->channel);
-          return newOutputs;
-        }
-
-        sensorOutputs read()
-        {
-            static sensorOutputs newOutputs;
-
-            if (this->isConnected)
-            {
-              enableMuxPort(this->channel);
-
-//            sensors_event_t eventA;
-//            bno.getEvent(&eventA);
-
-
-//            this is for test
-            //imu::Quaternion quat;
-//            Serial.print("Sensor: ");
-//            Serial.println(this-> sensor_id);
-//            imu::Quaternion quat=bno.getQuat();
-//            Serial.print(" quaternion w: ");
-//            Serial.print(quat.w());
-//            Serial.print(" quaternion x: ");
-//            Serial.print(quat.x());
-//            Serial.print(" quaternion y: ");
-//            Serial.print(quat.y());
-//            Serial.print(" quaternion z: ");
-//            Serial.println(quat.z());
-//
-//            Serial.print(" orientation x: ");
-//            Serial.print(eventA.orientation.x);
-//            Serial.print(" orientation y: ");
-//            Serial.print(eventA.orientation.y);
-//            Serial.print(" orientation z: ");
-//            Serial.println(eventA.orientation.z);
-//
-//
-//
-//            newOutputs.oz=(int)(eventA.orientation.x*10);//Note that I changed this to make it consistent with datasheet cordinate system
-//            newOutputs.oy=(int)(eventA.orientation.y*10);
-//            newOutputs.ox=(int)(eventA.orientation.z*10);
-
-              while (this->myIMU.dataAvailable() == false);
-
-                float quatI = myIMU.getQuatI();
-                float quatJ = myIMU.getQuatJ();
-                float quatK = myIMU.getQuatK();
-                float quatReal = myIMU.getQuatReal();
-                float quatRadianAccuracy = myIMU.getQuatRadianAccuracy();
-
-
-              newOutputs.x=(int)(quatI*10000);
-              newOutputs.y=(int)(quatJ*10000);
-              newOutputs.z=(int)(quatK*10000);
-              newOutputs.w=(int)(quatReal*10000);
-
-
-            disableMuxPort(this->channel);
-            }
-            else
-            {
-//                Serial.println("no sensor:");
-              newOutputs.x=0;
-              newOutputs.y=0;
-              newOutputs.z=0;
-              newOutputs.w=10000;
-            }
-
-            return newOutputs;
-        }
 
         void restorePredefinedCalibration()
         {
@@ -597,45 +479,149 @@ class imu_sensor {
 
         }
 
+        sensorOutputs read()
+        {
+            sensorOutputs newOutputs;
 
-        //void store(Person owner,FlashStorageClass<adafruit_bno055_offsets_t> my_flash_store)
-        //{
+            if (this->isConnected)
+            {
+                enableMuxPort(this->channel);
+                if(this->sensor_type==SENSOR_BNO080)
+                {
+                    newOutputs=read_bno080();
+                }
+                if(this->sensor_type==SENSOR_BNO055)
+                {
+                    newOutputs=read_bno055();
+                }
+                disableMuxPort(this->channel);
+            }
+            else
+            {
+              newOutputs.x=0;
+              newOutputs.y=0;
+              newOutputs.z=0;
+              newOutputs.w=10000;
+            }
 
-          //my_flash_store.write(owner);
-          //delay(5000);
+            return newOutputs;
+        }
+
+        sensorOutputs read_bno080()
+        {
+            sensorOutputs newOutputs;
+
+            while (this->myIMU.dataAvailable() == false);
+
+            float quatI = myIMU.getQuatI();
+            float quatJ = myIMU.getQuatJ();
+            float quatK = myIMU.getQuatK();
+            float quatReal = myIMU.getQuatReal();
+            float quatRadianAccuracy = myIMU.getQuatRadianAccuracy();
+
+            newOutputs.x=(int)(quatI*10000);
+            newOutputs.y=(int)(quatJ*10000);
+            newOutputs.z=(int)(quatK*10000);
+            newOutputs.w=(int)(quatReal*10000);
+
+            return newOutputs;
+        }
+
+        sensorOutputs read_bno055()
+        {
+            sensorOutputs newOutputs;
+
+            imu::Quaternion quat=bno.getQuat();
+
+            newOutputs.x=(int)(quat.x()*10000);
+            newOutputs.y=(int)(quat.y()*10000);
+            newOutputs.z=(int)(quat.z()*10000);
+            newOutputs.w=(int)(quat.w()*10000);
+
+            return newOutputs;
+        }
 
 
+        sensorOutputs read_calib()
+        {
+            sensorOutputs newOutputs;
 
-        //}
-        //void restore(FlashStorageClass<Person> my_flash_store)
-        //{
-          //Serial.println("restoring values for sensor:");
-          //Serial.print(this-> sensor_id);
-          //Serial.println(" ");
-          //Person owner;
-          //owner = my_flash_store.read();
-          //Serial.print("name: ");
-//          Serial.print(owner.name);
-//          Serial.print("surname:");
-//          Serial.print(owner.surname);
+            if (this->isConnected)
+            {
+                enableMuxPort(this->channel);
+                if(this->sensor_type==SENSOR_BNO080)
+                {
+                    newOutputs=read_calib_bno080();
+                }
+                if(this->sensor_type==SENSOR_BNO055)
+                {
+                    newOutputs=read_calib_bno055();
+                }
+                disableMuxPort(this->channel);
+            }
+            else
+            {
+              newOutputs.x=0;
+              newOutputs.y=0;
+              newOutputs.z=0;
+              newOutputs.w=0;
+            }
 
-        //}
+            return newOutputs;
+        }
+
+        sensorOutputs read_calib_bno080()
+        {
+            sensorOutputs newOutputs;
+            newOutputs.x=this->myIMU.getMagAccuracy();
+            newOutputs.y=this->myIMU.getMagAccuracy();
+            newOutputs.z=this->myIMU.getQuatRadianAccuracy();
+            newOutputs.w=this->myIMU.getQuatRadianAccuracy();
+            return newOutputs;
+        }
+
+        sensorOutputs read_calib_bno055()
+        {
+            sensorOutputs newOutputs;
+            /* Get the four calibration values (0..3) */
+            /* Any sensor data reporting 0 should be ignored, */
+            /* 3 means 'fully calibrated" */
+
+            uint8_t systemA, gyroA, accelA, magA;
+            systemA = gyroA = accelA = magA = 0;
+            bno.getCalibration(&systemA, &gyroA, &accelA, &magA);
+
+            /* Display the individual values */
+//          Serial.print("Sys'A':");
+//          Serial.print(systemA, DEC);
+//          Serial.print(" G'A':");
+//          Serial.print(gyroA, DEC);
+//          Serial.print(" A'A':");
+//          Serial.print(accelA, DEC);
+//          Serial.print(" M'A':");
+//          Serial.print(magA, DEC);
+            newOutputs.x=systemA;
+            newOutputs.y=gyroA;
+            newOutputs.z=accelA;
+            newOutputs.w=magA;
+            return newOutputs;
+        }
 
 };
 
 
-imu_sensor imu_sensor0=imu_sensor(0,0,0x4B);
-imu_sensor imu_sensor1=imu_sensor(1,0,0x4A);
-imu_sensor imu_sensor2=imu_sensor(2,1,0x4B);
-imu_sensor imu_sensor3=imu_sensor(3,1,0x4A);
-imu_sensor imu_sensor4=imu_sensor(4,2,0x4B);
-imu_sensor imu_sensor5=imu_sensor(5,2,0x4A);
-imu_sensor imu_sensor6=imu_sensor(6,3,0x4B);
-imu_sensor imu_sensor7=imu_sensor(7,3,0x4A);
-imu_sensor imu_sensor8=imu_sensor(8,4,0x4B);
-imu_sensor imu_sensor9=imu_sensor(9,4,0x4A);
-imu_sensor imu_sensor10=imu_sensor(10,5,0x4B);
-imu_sensor imu_sensor11=imu_sensor(11,5,0x4A);
+imu_sensor imu_sensor0=imu_sensor(0,0,0x28,0x4B);
+imu_sensor imu_sensor1=imu_sensor(1,0,0x29,0x4A);
+imu_sensor imu_sensor2=imu_sensor(2,1,0x28,0x4B);
+imu_sensor imu_sensor3=imu_sensor(3,1,0x29,0x4A);
+imu_sensor imu_sensor4=imu_sensor(4,2,0x28,0x4B);
+imu_sensor imu_sensor5=imu_sensor(5,2,0x29,0x4A);
+imu_sensor imu_sensor6=imu_sensor(6,3,0x28,0x4B);
+imu_sensor imu_sensor7=imu_sensor(7,3,0x29,0x4A);
+imu_sensor imu_sensor8=imu_sensor(8,4,0x28,0x4B);
+imu_sensor imu_sensor9=imu_sensor(9,4,0x29,0x4A);
+imu_sensor imu_sensor10=imu_sensor(10,5,0x28,0x4B);
+imu_sensor imu_sensor11=imu_sensor(11,5,0x29,0x4A);
 
 /**************************************************************************/
 /*
@@ -676,32 +662,8 @@ void setup(void)
     delay(1000);
   Serial.println("1");
   
-//  enableMuxPort(0);
-//
-//  delay(500);
-//  byte value = 0;
-//  //Serial.println("loop:");
-//  Serial.println("Wire0x28 port0:============");
-//  Wire.beginTransmission(0x28);
-//  Wire.write((uint8_t)0x00);
-//  Wire.endTransmission();
-//  Wire.requestFrom(0x28, (byte)1);
-//  value = Wire.read();
-//  Serial.println(value);         // print the character
-//  delay(1000);
-//  Serial.println("Wire0x29 port0:============");
-//  Wire.beginTransmission(0x29);
-//  Wire.write((uint8_t)0x00);
-//  Wire.endTransmission();
-//  Wire.requestFrom(0x29, (byte)1);
-//  value = Wire.read();
-//  Serial.println(value);         // print the character
-//
-//  disableMuxPort(0);
   delay(1000);
-  
-  //Init_bno();
-  //attachInterrupt(digitalPinToInterrupt(interruptPin), send_data_ISR, RISING );
+
   imu_sensor0.init();
   imu_sensor1.init();
   imu_sensor2.init();
@@ -728,35 +690,6 @@ void setup(void)
   imu_sensor9.calibrate();
   imu_sensor10.calibrate();
   imu_sensor11.calibrate();
-
-
-//  imu_sensor0.calibrate(my_flash_store0);
-//  delay(1000);
-//  imu_sensor1.calibrate(my_flash_store1);
-//  delay(1000);
-//  imu_sensor2.calibrate(my_flash_store2);
-//  delay(1000);
-//  imu_sensor3.calibrate(my_flash_store3);
-//  delay(1000);
-//  imu_sensor4.calibrate(my_flash_store4);
-//  delay(1000);
-//  imu_sensor5.calibrate(my_flash_store5);
-//  delay(1000);
-//  imu_sensor6.calibrate(my_flash_store6);
-//  delay(1000);
-//  imu_sensor7.calibrate(my_flash_store7);
-//  delay(1000);
-//  imu_sensor8.calibrate(my_flash_store8);
-//  delay(1000);
-//  imu_sensor9.calibrate(my_flash_store9);
-//  delay(1000);
-//  imu_sensor10.calibrate(my_flash_store10);
-//  delay(1000);
-//  imu_sensor11.calibrate(my_flash_store11);
-//  delay(1000);
-
-
-
 
   scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
 }
@@ -800,11 +733,13 @@ void setup(void)
   sensor11=imu_sensor11.read();
 
   if (scale.is_ready()) {
-  scale_data = scale.read();
-  //Serial.print("HX711 reading: ");
-  //Serial.println(reading);
-  } else {
-    //Serial.println("HX711 not found.");
+      scale_data = scale.read();
+      //Serial.print("HX711 reading: ");
+      //Serial.println(reading);
+  }
+  else
+  {
+        //Serial.println("HX711 not found.");
   }
 
   char buffer[300];
@@ -819,8 +754,8 @@ void setup(void)
   //Serial.write(0x0A);
   sensorOutputs cal9;
   sensorOutputs cal8;
-  cal9=imu_sensor8.read_calibration_status();
-  cal8=imu_sensor8.read_calibration_status();
+  cal9=imu_sensor8.read_calib();
+  cal8=imu_sensor8.read_calib();
 
   char buffer_cal[300];
   sprintf(buffer_cal, "{ \"C8\":[%d,%d,%d,%d], \"C9\":[%d,%d,%d,%d]} ",cal8.x,cal8.y,cal8.z,cal8.w, cal9.x,cal9.y,cal9.z,cal9.w);
