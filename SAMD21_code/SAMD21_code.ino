@@ -375,10 +375,6 @@ void setup(void)
 
     char my_buffer[200];
     sprintf(my_buffer, "{\"S0\":[%d,%d,%d,%d], \"S1\":[%d,%d,%d,%d], \"S2\":[%d,%d,%d,%d], \"S3\":[%d,%d,%d,%d] }",sensor0.x,sensor0.y,sensor0.z,sensor0.w, sensor1.x,sensor1.y,sensor1.z,sensor1.w,sensor2.x,sensor2.y,sensor2.z,sensor2.w,sensor3.x,sensor3.y,sensor3.z,sensor3.w);
-    //  sprintf(buffer, "{\"SC\":[%d], \"S0\":[%d,%d,%d,%d], \"S1\":[%d,%d,%d], \"S2\":[%d,%d,%d], \"S3\":[%d,%d,%d], \"S4\":[%d,%d,%d], \"S5\":[%d,%d,%d], \"S6\":[%d,%d,%d], \"S7\":[%d,%d,%d], \"S8\":[%d,%d,%d], \"S9\":[%d,%d,%d], \"S10\":[%d,%d,%d], \"S11\":[%d,%d,%d]} ",scale_data,sensor0.ox,sensor0.oy,sensor0.oz,sensor1.ox,sensor1.oy,sensor1.oz,sensor2.ox,sensor2.oy,sensor2.oz,sensor3.ox,sensor3.oy,sensor3.oz,sensor4.ox,sensor4.oy,sensor4.oz,sensor5.ox,sensor5.oy,sensor5.oz,sensor6.ox,sensor6.oy,sensor6.oz,sensor7.ox,sensor7.oy,sensor7.oz,sensor8.ox,sensor8.oy,sensor8.oz,sensor9.ox,sensor9.oy,sensor9.oz,sensor10.ox,sensor10.oy,sensor10.oz,sensor11.ox,sensor11.oy,sensor11.oz);
-    //  sprintf(buffer, "{\"SC\":[%d], \"S0\":[%d,%d,%d,%d], \"S1\":[%d,%d,%d,%d]} ",scale_data,sensor0.x,sensor0.y,sensor0.z,sensor0.w,sensor1.x,sensor1.y,sensor1.z,sensor1.w);
-    //sprintf(buffer, "{\"SC\":[%d], \"S0\":[%d,%d,%d], \"S1\":[%d,%d,%d], \"S2\":[%d,%d,%d], \"S3\":[%d,%d,%d], \"S4\":[%d,%d,%d], \"S5\":[%d,%d,%d], \"S6\":[%d,%d,%d], \"S7\":[%d,%d,%d], \"S8\":[%d,%d,%d], \"S9\":[%d,%d,%d], \"S10\":[%d,%d,%d], \"S11\":[%d,%d,%d], \"ST\":[%d,%d,%d]} ",
-    //                  scale_data, i++,101,102,sensor0.ox,sensor0.oy,sensor0.oz,120,121,122,130,131,132,140,141,142,150,151,152,160,161,162,170,171,172,180,181,182,190,191,192,200,201,202,210,211,212,220,221,222);
 
     SerialUSB.println(my_buffer);
     //SerialUSB.write(0x0D);
@@ -387,10 +383,6 @@ void setup(void)
     sensorOutputs cal8;
     sensorOutputs cal7;
     sensorOutputs cal6;
-    //cal9=imu_sensor9.read_calib();
-    //cal8=imu_sensor8.read_calib();
-    //cal7=imu_sensor7.read_calib();
-    //cal6=imu_sensor6.read_calib();
 
     //char buffer_cal[300];
     //sprintf(buffer_cal, "{ \"C6\":[%d,%d,%d,%d], \"C7\":[%d,%d,%d,%d], \"C8\":[%d,%d,%d,%d], \"C9\":[%d,%d,%d,%d]} ",cal6.x,cal6.y,cal6.z,cal6.w, cal7.x,cal7.y,cal7.z,cal7.w, cal8.x,cal8.y,cal8.z,cal8.w, cal9.x,cal9.y,cal9.z,cal9.w);
