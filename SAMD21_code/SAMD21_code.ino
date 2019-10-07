@@ -9,9 +9,13 @@
 
 
 #include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BNO055.h>
+#include "wiring_private.h"
+
 ///#include <Adafruit_Sensor.h>
 //#in/clude <utility/imumaths.h>
-#include "SparkFun_BNO080_Arduino_Library.h"
+//#include "SparkFun_BNO080_Arduino_Library.h"
 
 
 
@@ -29,6 +33,18 @@ struct sensorOutputs {
 
 #define SAMPLERATE_DELAY_MS (1)
 
+static const adafruit_bno055_offsets_t Predefined_Calibration[]= {{21975, 0, 3928, 8192, 3, 0 ,  127, 0, 21517, 0,2 },  //0
+                                                                    {21975, 0, 3928, 8192, 3, 0 ,  127, 0, 21517, 0,2 },//1
+                                                                    {18, -18, 12, -150, -307, -470 , -1, 0, -1 , 1000, 742},//2
+                                                                    { 24, 39, 10 , -761, -438, 305 , 2, 1, 3 , 1000, 947},//3
+                                                                    { 5, 35, 10 , -387, -216, -525 , -2, -2, 1 , 1000, 573},//4
+                                                                    {-7, 24, 10 , 813, 403, -29 , -2, -1, -1 , 1000, 570},//5
+                                                                    {16, 26, 15 , -52, -77, -578 , 0, 0, 0 , 1000, 556},//6
+                                                                    {-7, 56, 1 , 263, 150, -383 , -3, -4, 0 , 1000, 541},//7
+                                                                    {14, -6, 17 , -1055, 257, 742 , -1, -1, -1 , 1000, 576},//8
+                                                                    {14, -6, 17 , -1051, 263, 740, -1, -1, -1 , 1000, 596},//9
+                                                                    {11, 21, 35 , -86, 122, -872 , -2, -2, 0 , 1000, 646},//10
+                                                                    {11, 21, 35 , -79, 114, -865 , -2, -2, 0 , 1000, 704}};//11
 
 float sensorA_OX;
 float sensorA_OY;
@@ -38,7 +54,10 @@ float sensorB_OY;
 float sensorB_OZ;
 
 #define PIN_LED 43
+#define PIN_SDA2 11
+#define PIN_SCL2 13
 
+TwoWire Wire2(&sercom1, PIN_SDA2, PIN_SCL2);   //(&PERIPH_WIRE, PIN_WIRE_SDA, PIN_WIRE_SCL);
 
 
 /**************************************************************************/
@@ -55,16 +74,34 @@ float sensorB_OZ;
 class imu_sensor {
     private:
         uint8_t address;
+        uint8_t channel;
         uint8_t sensor_id;
-        BNO080 myIMU;
+        //TwoWire myWire;
+        TwoWire *myWire;
+//        BNO080 myIMU;
         bool isConnected;
+        Adafruit_BNO055 bno;
 
     public:
         //constructor
-        imu_sensor(uint8_t sensor_id, uint8_t address)
+//        imu_sensor(uint8_t sensor_id, TwoWire *theWire, uint8_t address )
+        imu_sensor(uint8_t sensor_id, uint8_t channel, uint8_t address )
         {
+            this->channel=channel;
             this->address=address;
+            //this->myWire=Wire;
             this-> sensor_id=sensor_id;
+            if (channel==2)
+            {
+                this->bno = Adafruit_BNO055(sensor_id, address, &Wire2); /* A Sensor Address */
+                this->myWire = &Wire2;
+            }
+            else
+            {
+                this->bno = Adafruit_BNO055(sensor_id, address); /* A Sensor Address */
+                this->myWire = &Wire;
+            }
+
         }
 
         void init()
@@ -77,23 +114,23 @@ class imu_sensor {
             SerialUSB.print(this->address);
             SerialUSB.println(" ");
             SerialUSB.println("WHOAMI register reply:");
-            Wire.beginTransmission(this->address);
-            Wire.write((uint8_t)0x00);
-            Wire.endTransmission();
-            Wire.requestFrom(this->address, (byte)1);
-            value = Wire.read();
+            this->myWire->beginTransmission(this->address);
+            this->myWire->write((uint8_t)0x00);
+            this->myWire->endTransmission();
+            this->myWire->requestFrom(this->address, (byte)1);
+            value = this->myWire->read();
             SerialUSB.println(value);         // print the character
             delay(500);
-            if(this->myIMU.begin(this->address,Wire) == true)
+            if(!this->bno.begin())
               {
-                SerialUSB.println("BNO080 is detected at this node!");
-                this->isConnected= true;
+                SerialUSB.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
+                SerialUSB.println(" ");
+                this->isConnected= false;
               }
               else
               {
-                SerialUSB.print("Ooops, no BNO detected ... Check your wiring or I2C ADDR!");
-                SerialUSB.println(" ");
-                this->isConnected= false;
+                this->isConnected= true;
+                SerialUSB.println("This sensor is alive!");
               }
         }
 
@@ -102,27 +139,15 @@ class imu_sensor {
             if( this->isConnected)
             {
 
-            SerialUSB.print("Calibration for sensor ");
+            SerialUSB.println("Restoring Predefined Calibration for sensor: ");
             SerialUSB.print(this-> sensor_id);
             SerialUSB.print("on address:");
             SerialUSB.print(this->address);
             SerialUSB.println(" ");
-
-            //Enable dynamic calibration for accel, gyro, and mag
-            this->myIMU.calibrateAll(); //Turn on cal for Accel, Gyro, and Mag
-
-            //Enable Game Rotation Vector output
-            this->myIMU.enableGameRotationVector(100); //Send data update every 100ms
-
-            //Enable Magnetic Field output
-            this->myIMU.enableMagnetometer(100); //Send data update every 100ms
-
-            //Once magnetic field is 2 or 3, run the Save DCD Now command
-            //  SerialUSB.println(F("Calibrating. Press 's' to save to flash"));
-            //  SerialUSB.println(F("Output in form x, y, z, in uTesla"));
-            this->calibrationProcess();
-
-
+            adafruit_bno055_offsets_t calibrationDataA = Predefined_Calibration[this->sensor_id];
+            bno.setSensorOffsets(calibrationDataA);
+            this->displaySensorOffsets(calibrationDataA);
+            SerialUSB.println("Predefined Calibration data restored!");
             SerialUSB.println("\n\nCalibration Is Done!");
             delay(500);
             }
@@ -133,106 +158,103 @@ class imu_sensor {
         */
         /**************************************************************************/
 
-        //Given a accuracy number, print what it means
-        void printAccuracyLevel(byte accuracyNumber)
+        void displaySensorDetails(void)
         {
-          if (accuracyNumber == 0) SerialUSB.print(F("Unreliable"));
-          else if (accuracyNumber == 1) SerialUSB.print(F("Low"));
-          else if (accuracyNumber == 2) SerialUSB.print(F("Medium"));
-          else if (accuracyNumber == 3) SerialUSB.print(F("High"));
+          //enableMuxPort(this->channel);
+          sensor_t sensorA;
+
+          bno.getSensor(&sensorA);
+
+          SerialUSB.println("------------------------------------");
+          SerialUSB.print  ("Sensor:       "); SerialUSB.println(sensorA.name);
+          SerialUSB.print  ("Driver Ver:   "); SerialUSB.println(sensorA.version);
+          SerialUSB.print  ("Unique ID:    "); SerialUSB.println(sensorA.sensor_id);
+          SerialUSB.print  ("Max Value:    "); SerialUSB.print(sensorA.max_value); SerialUSB.println(" xxx");
+          SerialUSB.print  ("Min Value:    "); SerialUSB.print(sensorA.min_value); SerialUSB.println(" xxx");
+          SerialUSB.print  ("Resolution:   "); SerialUSB.print(sensorA.resolution); SerialUSB.println(" xxx");
+          SerialUSB.println("------------------------------------");
+          SerialUSB.println("");
+          delay(500);
+          //disableMuxPort(this->channel);
         }
-        void calibrationProcess()
+
+        /**************************************************************************/
+        /*
+            Display sensor calibration status
+        */
+        /**************************************************************************/
+        void displayCalStatus(void)
         {
-            bool stillCalibrating=true;
-            while(stillCalibrating==true)
-            {
+          //enableMuxPort(this->channel);
+          /* Get the four calibration values (0..3) */
+          /* Any sensor data reporting 0 should be ignored, */
+          /* 3 means 'fully calibrated" */
 
+          uint8_t systemA, gyroA, accelA, magA;
+          systemA = gyroA = accelA = magA = 0;
+          bno.getCalibration(&systemA, &gyroA, &accelA, &magA);
 
-          if(SerialUSB.available())
+          /* The data should be ignored until the system calibration is > 0 */
+          SerialUSB.print("\t");
+          if (!systemA)
           {
-            byte incoming = SerialUSB.read();
-
-            if(incoming == 's')
-            {
-              this->myIMU.saveCalibration(); //Saves the current dynamic calibration data (DCD) to memory
-              this->myIMU.requestCalibrationStatus(); //Sends command to get the latest calibration status
-
-              //Wait for calibration response, timeout if no response
-              int counter = 100;
-              while(1)
-              {
-                if(--counter == 0) break;
-                if(this->myIMU.dataAvailable() == true)
-                {
-                  //The IMU can report many different things. We must wait
-                  //for the ME Calibration Response Status byte to go to zero
-                  if(this->myIMU.calibrationComplete() == true)
-                  {
-                    SerialUSB.println("Calibration data successfully stored");
-                    delay(1000);
-                    stillCalibrating=false;
-                    break;
-                  }
-                }
-
-                delay(1);
-              }
-              if(counter == 0)
-              {
-                SerialUSB.println("Calibration data failed to store. Please try again.");
-              }
-
-              //myIMU.endCalibration(); //Turns off all calibration
-              //In general, calibration should be left on at all times. The BNO080
-              //auto-calibrates and auto-records cal data roughly every 5 minutes
-            }
-            if (incoming=='c')
-            {
-                    SerialUSB.println("Calibration canceled");
-                    delay(1000);
-                    stillCalibrating=false;
-            }
+            SerialUSB.print("! ");
           }
 
-          //Look for reports from the IMU
-          if (this->myIMU.dataAvailable() == true)
-          {
-            float x = this->myIMU.getMagX();
-            float y = this->myIMU.getMagY();
-            float z = this->myIMU.getMagZ();
-            byte accuracy = this->myIMU.getMagAccuracy();
+          /* Display the individual values */
+          SerialUSB.print("Sys'A':");
+          SerialUSB.print(systemA, DEC);
+          SerialUSB.print(" G'A':");
+          SerialUSB.print(gyroA, DEC);
+          SerialUSB.print(" A'A':");
+          SerialUSB.print(accelA, DEC);
+          SerialUSB.print(" M'A':");
+          SerialUSB.print(magA, DEC);
+          //disableMuxPort(this->channel);
+        }
 
-            float quatI = this->myIMU.getQuatI();
-            float quatJ = this->myIMU.getQuatJ();
-            float quatK = this->myIMU.getQuatK();
-            float quatReal = this->myIMU.getQuatReal();
-            byte sensorAccuracy = this->myIMU.getQuatAccuracy();
+         void displaySensorOffsets(const adafruit_bno055_offsets_t &calibDataA)
+        {
+            //enableMuxPort(this->channel);
+            SerialUSB.print("Accelerometer: ");
+            SerialUSB.print(calibDataA.accel_offset_x); SerialUSB.print(" ");
+            SerialUSB.print(calibDataA.accel_offset_y); SerialUSB.print(" ");
+            SerialUSB.print(calibDataA.accel_offset_z); SerialUSB.print(" ");
 
-            SerialUSB.print(x, 2);
-            SerialUSB.print(F(","));
-            SerialUSB.print(y, 2);
-            SerialUSB.print(F(","));
-            SerialUSB.print(z, 2);
-            SerialUSB.print(F(","));
-            this->printAccuracyLevel(accuracy);
-            SerialUSB.print(F(","));
+            SerialUSB.print("\nGyro: ");
+            SerialUSB.print(calibDataA.gyro_offset_x); SerialUSB.print(" ");
+            SerialUSB.print(calibDataA.gyro_offset_y); SerialUSB.print(" ");
+            SerialUSB.print(calibDataA.gyro_offset_z); SerialUSB.print(" ");
 
-            SerialUSB.print("\t");
+            SerialUSB.print("\nMag: ");
+            SerialUSB.print(calibDataA.mag_offset_x); SerialUSB.print(" ");
+            SerialUSB.print(calibDataA.mag_offset_y); SerialUSB.print(" ");
+            SerialUSB.print(calibDataA.mag_offset_z); SerialUSB.print(" ");
 
-            SerialUSB.print(quatI, 2);
-            SerialUSB.print(F(","));
-            SerialUSB.print(quatJ, 2);
-            SerialUSB.print(F(","));
-            SerialUSB.print(quatK, 2);
-            SerialUSB.print(F(","));
-            SerialUSB.print(quatReal, 2);
-            SerialUSB.print(F(","));
-            this->printAccuracyLevel(sensorAccuracy);
-            SerialUSB.print(F(","));
+            SerialUSB.print("\nAccel Radius: ");
+            SerialUSB.print(calibDataA.accel_radius);
 
-            SerialUSB.println();
-          }
-          }
+            SerialUSB.print("\nMag Radius: ");
+            SerialUSB.print(calibDataA.mag_radius);
+            //disableMuxPort(this->channel);
+        }
+
+        sensorOutputs read_calibration_status()
+        {
+         sensorOutputs newOutputs;
+          /* Get the four calibration values (0..3) */
+          /* Any sensor data reporting 0 should be ignored, */
+          /* 3 means 'fully calibrated" */
+
+          uint8_t systemA, gyroA, accelA, magA;
+          systemA = gyroA = accelA = magA = 0;
+          bno.getCalibration(&systemA, &gyroA, &accelA, &magA);
+
+           newOutputs.x=systemA;
+           newOutputs.y=gyroA;
+           newOutputs.z=accelA;
+           newOutputs.w=magA;
+          return newOutputs;
         }
 
         sensorOutputs read()
@@ -241,73 +263,36 @@ class imu_sensor {
 
             if (this->isConnected)
             {
-                newOutputs=read_bno080();
+
+
+            imu::Quaternion quat=bno.getQuat();
+
+              newOutputs.x=(int)(quat.x()*10000);
+              newOutputs.y=(int)(quat.y()*10000);
+              newOutputs.z=(int)(quat.z()*10000);
+              newOutputs.w=(int)(quat.w()*10000);
+
             }
             else
             {
+//                SerialUSB.println("no sensor:");
               newOutputs.x=0;
               newOutputs.y=0;
               newOutputs.z=0;
               newOutputs.w=10000;
             }
-            return newOutputs;
-        }
-
-        sensorOutputs read_bno080()
-        {
-            sensorOutputs newOutputs;
-
-            while (this->myIMU.dataAvailable() == false);
-
-            float quatI = myIMU.getQuatI();
-            float quatJ = myIMU.getQuatJ();
-            float quatK = myIMU.getQuatK();
-            float quatReal = myIMU.getQuatReal();
-            float quatRadianAccuracy = myIMU.getQuatRadianAccuracy();
-
-            newOutputs.x=(int)(quatI*10000);
-            newOutputs.y=(int)(quatJ*10000);
-            newOutputs.z=(int)(quatK*10000);
-            newOutputs.w=(int)(quatReal*10000);
 
             return newOutputs;
         }
 
-        sensorOutputs read_calib()
-        {
-            sensorOutputs newOutputs;
-
-            if (this->isConnected)
-            {
-                newOutputs=read_calib_bno080();
-            }
-            else
-            {
-              newOutputs.x=0;
-              newOutputs.y=0;
-              newOutputs.z=0;
-              newOutputs.w=0;
-            }
-
-            return newOutputs;
-        }
-
-        sensorOutputs read_calib_bno080()
-        {
-            sensorOutputs newOutputs;
-            newOutputs.x=this->myIMU.getMagAccuracy();
-            newOutputs.y=this->myIMU.getMagAccuracy();
-            newOutputs.z=this->myIMU.getQuatRadianAccuracy();
-            newOutputs.w=this->myIMU.getQuatRadianAccuracy();
-            return newOutputs;
-        }
 };
 
 
-imu_sensor imu_sensor0=imu_sensor(0,0x4A);
-imu_sensor imu_sensor1=imu_sensor(1,0x2A);
-imu_sensor imu_sensor2=imu_sensor(2,0x45);
-imu_sensor imu_sensor3=imu_sensor(3,0x25);
+//imu_sensor imu_sensor0=imu_sensor(0,&Wire,0x28); this worked
+imu_sensor imu_sensor0=imu_sensor(0,0,0x28);
+imu_sensor imu_sensor1=imu_sensor(1,0,0x29);
+imu_sensor imu_sensor2=imu_sensor(2,0,0x28);
+imu_sensor imu_sensor3=imu_sensor(3,0,0x29);
 
 
 /**************************************************************************/
@@ -319,9 +304,17 @@ void setup(void)
 {
   pinMode(PIN_LED, OUTPUT);
   digitalWrite(PIN_LED,0);
+  pinPeripheral(PIN_SDA2, PIO_SERCOM);
+  pinPeripheral(PIN_SCL2, PIO_SERCOM);
 
   Wire.begin();
   Wire.setClock(400000); //Increase I2C data rate to 400kHz
+  Wire2.begin();
+  Wire2.setClock(400000); //Increase I2C data rate to 400kHz
+
+  pinPeripheral(PIN_SDA2, PIO_SERCOM);
+  pinPeripheral(PIN_SCL2, PIO_SERCOM);
+
   SerialUSB.begin(230400);
   SerialUSB.println("SMARTsurg ExoEskeleton board--- new version");  SerialUSB.println("");
   SerialUSB.println("hellowwwwwwwwwwwwwwwwwwwwwwwwwww");
@@ -379,10 +372,10 @@ void setup(void)
     SerialUSB.println(my_buffer);
     //SerialUSB.write(0x0D);
     //SerialUSB.write(0x0A);
-    sensorOutputs cal9;
-    sensorOutputs cal8;
-    sensorOutputs cal7;
-    sensorOutputs cal6;
+//    sensorOutputs cal9;
+//    sensorOutputs cal8;
+//    sensorOutputs cal7;
+//    sensorOutputs cal6;
 
     //char buffer_cal[300];
     //sprintf(buffer_cal, "{ \"C6\":[%d,%d,%d,%d], \"C7\":[%d,%d,%d,%d], \"C8\":[%d,%d,%d,%d], \"C9\":[%d,%d,%d,%d]} ",cal6.x,cal6.y,cal6.z,cal6.w, cal7.x,cal7.y,cal7.z,cal7.w, cal8.x,cal8.y,cal8.z,cal8.w, cal9.x,cal9.y,cal9.z,cal9.w);
