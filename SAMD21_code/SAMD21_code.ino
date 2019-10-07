@@ -98,7 +98,7 @@ class imu_sensor {
             }
             else
             {
-                this->bno = Adafruit_BNO055(sensor_id, address); /* A Sensor Address */
+                this->bno = Adafruit_BNO055(sensor_id, address, &Wire); /* A Sensor Address */
                 this->myWire = &Wire;
             }
 
@@ -289,10 +289,10 @@ class imu_sensor {
 
 
 //imu_sensor imu_sensor0=imu_sensor(0,&Wire,0x28); this worked
-imu_sensor imu_sensor0=imu_sensor(0,0,0x28);
-imu_sensor imu_sensor1=imu_sensor(1,0,0x29);
-imu_sensor imu_sensor2=imu_sensor(2,0,0x28);
-imu_sensor imu_sensor3=imu_sensor(3,0,0x29);
+imu_sensor imu_sensor0=imu_sensor(0,1,0x29);
+imu_sensor imu_sensor1=imu_sensor(1,1,0x28);
+imu_sensor imu_sensor2=imu_sensor(2,2,0x29);
+imu_sensor imu_sensor3=imu_sensor(3,2,0x28);
 
 
 /**************************************************************************/
