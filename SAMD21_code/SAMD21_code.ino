@@ -289,8 +289,8 @@ class imu_sensor {
 
 
 //imu_sensor imu_sensor0=imu_sensor(0,&Wire,0x28); this worked
-imu_sensor imu_sensor0=imu_sensor(0,1,0x29);
-imu_sensor imu_sensor1=imu_sensor(1,1,0x28);
+imu_sensor imu_sensor0=imu_sensor(0,2,0x29);
+imu_sensor imu_sensor1=imu_sensor(1,2,0x28);
 imu_sensor imu_sensor2=imu_sensor(2,2,0x29);
 imu_sensor imu_sensor3=imu_sensor(3,2,0x28);
 
@@ -329,6 +329,26 @@ void setup(void)
   SerialUSB.println("2");
     delay(1000);
   SerialUSB.println("1");
+  SerialUSB.println("test wire2");
+    SerialUSB.println("WHOAMI register reply:");
+    Wire2.beginTransmission(0x29);
+    Wire2.write((uint8_t)0x00);
+    Wire2.endTransmission();
+    Wire2.requestFrom(0x29, (byte)1);
+    byte value = 0;
+    value = Wire2.read();
+    SerialUSB.println(value);         // print the character
+    SerialUSB.println("BNO test:");
+  Adafruit_BNO055 bno = Adafruit_BNO055(20, 0x29, &Wire2); //next line will hang if this is on wire2, but it is fine when it is on wire!
+  if(!bno.begin())
+  {
+    SerialUSB.print("Ooo00000000000000ps, no BNO055 detected ");
+    SerialUSB.println(" ");
+  }
+  else
+  {
+    SerialUSB.println("This sensor is alive!");
+  }
   
   delay(1000);
 
