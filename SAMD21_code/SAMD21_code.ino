@@ -289,10 +289,10 @@ class imu_sensor {
 
 
 //imu_sensor imu_sensor0=imu_sensor(0,&Wire,0x28); this worked
-imu_sensor imu_sensor0=imu_sensor(0,2,0x29);
-imu_sensor imu_sensor1=imu_sensor(1,2,0x28);
-imu_sensor imu_sensor2=imu_sensor(2,2,0x29);
-imu_sensor imu_sensor3=imu_sensor(3,2,0x28);
+imu_sensor imu_sensor0=imu_sensor(0,0,0x29);
+imu_sensor imu_sensor1=imu_sensor(1,0,0x28);
+imu_sensor imu_sensor2=imu_sensor(2,0,0x47);
+imu_sensor imu_sensor3=imu_sensor(3,0,0x27);
 
 
 /**************************************************************************/
@@ -331,15 +331,15 @@ void setup(void)
   SerialUSB.println("1");
   SerialUSB.println("test wire2");
     SerialUSB.println("WHOAMI register reply:");
-    Wire2.beginTransmission(0x29);
+    Wire2.beginTransmission(0x45);
     Wire2.write((uint8_t)0x00);
     Wire2.endTransmission();
-    Wire2.requestFrom(0x29, (byte)1);
+    Wire2.requestFrom(0x45, (byte)1);
     byte value = 0;
     value = Wire2.read();
     SerialUSB.println(value);         // print the character
     SerialUSB.println("BNO test:");
-  Adafruit_BNO055 bno = Adafruit_BNO055(20, 0x29, &Wire2); //next line will hang if this is on wire2, but it is fine when it is on wire!
+  Adafruit_BNO055 bno = Adafruit_BNO055(20, 0x45, &Wire2); //next line will hang if this is on wire2, but it is fine when it is on wire!
   if(!bno.begin())
   {
     SerialUSB.print("Ooo00000000000000ps, no BNO055 detected ");
@@ -392,14 +392,14 @@ void setup(void)
     SerialUSB.println(my_buffer);
     //SerialUSB.write(0x0D);
     //SerialUSB.write(0x0A);
-//    sensorOutputs cal9;
-//    sensorOutputs cal8;
-//    sensorOutputs cal7;
-//    sensorOutputs cal6;
+    sensorOutputs cal0;
+    sensorOutputs cal1;
+    sensorOutputs cal2;
+    sensorOutputs cal3;
 
-    //char buffer_cal[300];
-    //sprintf(buffer_cal, "{ \"C6\":[%d,%d,%d,%d], \"C7\":[%d,%d,%d,%d], \"C8\":[%d,%d,%d,%d], \"C9\":[%d,%d,%d,%d]} ",cal6.x,cal6.y,cal6.z,cal6.w, cal7.x,cal7.y,cal7.z,cal7.w, cal8.x,cal8.y,cal8.z,cal8.w, cal9.x,cal9.y,cal9.z,cal9.w);
-    //SerialUSB.println(buffer_cal);
+    char buffer_cal[300];
+    sprintf(buffer_cal, "{ \"C0\":[%d,%d,%d,%d], \"C1\":[%d,%d,%d,%d], \"C2\":[%d,%d,%d,%d], \"C3\":[%d,%d,%d,%d]} ",cal0.x,cal0.y,cal0.z,cal0.w, cal1.x,cal1.y,cal1.z,cal1.w, cal2.x,cal2.y,cal2.z,cal2.w, cal3.x,cal3.y,cal3.z,cal3.w);
+    SerialUSB.println(buffer_cal);
 
     delay(SAMPLERATE_DELAY_MS);
     
