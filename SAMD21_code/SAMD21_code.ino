@@ -329,15 +329,26 @@ void setup(void)
   SerialUSB.println("2");
     delay(1000);
   SerialUSB.println("1");
-  SerialUSB.println("test wire2");
+
+
+    SerialUSB.println("test wire2");
     SerialUSB.println("WHOAMI register reply:");
-    Wire2.beginTransmission(0x45);
-    Wire2.write((uint8_t)0x00);
-    Wire2.endTransmission();
-    Wire2.requestFrom(0x45, (byte)1);
-    byte value = 0;
-    value = Wire2.read();
-    SerialUSB.println(value);         // print the character
+
+    for (int i=0;i<255;i++)
+    {
+        SerialUSB.print("Testing address:");
+        SerialUSB.println(i);
+        Wire.beginTransmission(i);
+        Wire.write((uint8_t)0x00);
+        Wire.endTransmission();
+        Wire.requestFrom(i, (byte)1);
+        byte value = 0;
+        value = Wire.read();
+        SerialUSB.print("reply:");
+        SerialUSB.println(value);         // print the character
+
+    }
+
     SerialUSB.println("BNO test:");
   Adafruit_BNO055 bno = Adafruit_BNO055(20, 0x45, &Wire2); //next line will hang if this is on wire2, but it is fine when it is on wire!
   if(!bno.begin())
