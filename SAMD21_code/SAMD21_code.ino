@@ -464,29 +464,6 @@ class imu_sensor {
         }
 
 
-        //void store(Person owner,FlashStorageClass<adafruit_bno055_offsets_t> my_flash_store)
-        //{
-
-          //my_flash_store.write(owner);
-          //delay(5000);
-
-
-
-        //}
-        //void restore(FlashStorageClass<Person> my_flash_store)
-        //{
-          //Serial.println("restoring values for sensor:");
-          //Serial.print(this-> sensor_id);
-          //Serial.println(" ");
-          //Person owner;
-          //owner = my_flash_store.read();
-          //Serial.print("name: ");
-//          Serial.print(owner.name);
-//          Serial.print("surname:");
-//          Serial.print(owner.surname);
-
-        //}
-
 };
 
 
@@ -494,14 +471,7 @@ imu_sensor imu_sensor0=imu_sensor(0,0,0x28);
 imu_sensor imu_sensor1=imu_sensor(1,0,0x29);
 imu_sensor imu_sensor2=imu_sensor(2,1,0x28);
 imu_sensor imu_sensor3=imu_sensor(3,1,0x29);
-imu_sensor imu_sensor4=imu_sensor(4,2,0x28);
-imu_sensor imu_sensor5=imu_sensor(5,2,0x29);
-imu_sensor imu_sensor6=imu_sensor(6,3,0x28);
-imu_sensor imu_sensor7=imu_sensor(7,3,0x29);
-imu_sensor imu_sensor8=imu_sensor(8,4,0x28);
-imu_sensor imu_sensor9=imu_sensor(9,4,0x29);
-imu_sensor imu_sensor10=imu_sensor(10,5,0x28);
-imu_sensor imu_sensor11=imu_sensor(11,5,0x29);
+
 
 /**************************************************************************/
 /*
@@ -571,55 +541,13 @@ void setup(void)
   imu_sensor1.init();
   imu_sensor2.init();
   imu_sensor3.init();
-  imu_sensor4.init();
-  imu_sensor5.init();
-  imu_sensor6.init();
-  imu_sensor7.init();
-  imu_sensor8.init();
-  imu_sensor9.init();
-  imu_sensor10.init();
-  imu_sensor11.init();
+
   delay(1000);
 
   imu_sensor0.restorePredefinedCalibration();
   imu_sensor1.restorePredefinedCalibration();
   imu_sensor2.restorePredefinedCalibration();
   imu_sensor3.restorePredefinedCalibration();
-  imu_sensor4.restorePredefinedCalibration();
-  imu_sensor5.restorePredefinedCalibration();
-  imu_sensor6.restorePredefinedCalibration();
-  imu_sensor7.restorePredefinedCalibration();
-  imu_sensor8.restorePredefinedCalibration();
-  imu_sensor9.restorePredefinedCalibration();
-  imu_sensor10.restorePredefinedCalibration();
-  imu_sensor11.restorePredefinedCalibration();
-
-
-//  imu_sensor0.calibrate(my_flash_store0);
-//  delay(1000);
-//  imu_sensor1.calibrate(my_flash_store1);
-//  delay(1000);
-//  imu_sensor2.calibrate(my_flash_store2);
-//  delay(1000);
-//  imu_sensor3.calibrate(my_flash_store3);
-//  delay(1000);
-//  imu_sensor4.calibrate(my_flash_store4);
-//  delay(1000);
-//  imu_sensor5.calibrate(my_flash_store5);
-//  delay(1000);
-//  imu_sensor6.calibrate(my_flash_store6);
-//  delay(1000);
-//  imu_sensor7.calibrate(my_flash_store7);
-//  delay(1000);
-//  imu_sensor8.calibrate(my_flash_store8);
-//  delay(1000);
-//  imu_sensor9.calibrate(my_flash_store9);
-//  delay(1000);
-//  imu_sensor10.calibrate(my_flash_store10);
-//  delay(1000);
-//  imu_sensor11.calibrate(my_flash_store11);
-//  delay(1000);
-
 
 
 
@@ -634,65 +562,36 @@ void setup(void)
  void loop(void)
 {
   
-  digitalWrite(LED_BUILTIN,!digitalRead(LED_BUILTIN));
-  digitalWrite(LED_SHIELD_1,!digitalRead(LED_SHIELD_1));
-  digitalWrite(LED_SHIELD_2,!digitalRead(LED_SHIELD_2));
-  digitalWrite(LED_SHIELD_3,!digitalRead(LED_SHIELD_3));
-  //Serial.println("main loop");
-  sensorOutputs sensor0;
-  sensorOutputs sensor1;
-  sensorOutputs sensor2;
-  sensorOutputs sensor3;
-  sensorOutputs sensor4;
-  sensorOutputs sensor5;
-  sensorOutputs sensor6;
-  sensorOutputs sensor7;
-  sensorOutputs sensor8;
-  sensorOutputs sensor9;
-  sensorOutputs sensor10;
-  sensorOutputs sensor11;
-  sensor0=imu_sensor0.read();
-  sensor1=imu_sensor1.read();
-  sensor2=imu_sensor2.read();
-  sensor3=imu_sensor3.read();
-  sensor4=imu_sensor4.read();
-  sensor5=imu_sensor5.read();
-  sensor6=imu_sensor6.read();
-  sensor7=imu_sensor7.read();
-  sensor8=imu_sensor8.read();
-  sensor9=imu_sensor9.read();
-  sensor10=imu_sensor10.read();
-  sensor11=imu_sensor11.read();
+    digitalWrite(LED_BUILTIN,!digitalRead(LED_BUILTIN));
+    digitalWrite(LED_SHIELD_1,!digitalRead(LED_SHIELD_1));
+    digitalWrite(LED_SHIELD_2,!digitalRead(LED_SHIELD_2));
+    digitalWrite(LED_SHIELD_3,!digitalRead(LED_SHIELD_3));
+    //Serial.println("main loop");
+    sensorOutputs sensor0;
+    sensorOutputs sensor1;
+    sensorOutputs sensor2;
+    sensorOutputs sensor3;
 
-  if (scale.is_ready()) {
-  scale_data = scale.read();
-  //Serial.print("HX711 reading: ");
-  //Serial.println(reading);
-  } else {
-    //Serial.println("HX711 not found.");
-  }
+    sensor0=imu_sensor0.read();
+    sensor1=imu_sensor1.read();
+    sensor2=imu_sensor2.read();
+    sensor3=imu_sensor3.read();
 
-  char buffer_data[300];
-  sprintf(buffer_data, "{\"SC\":[%d], \"S0\":[%d,%d,%d,%d], \"S1\":[%d,%d,%d,%d], \"S2\":[%d,%d,%d,%d], \"S3\":[%d,%d,%d,%d], \"S4\":[%d,%d,%d,%d], \"S5\":[%d,%d,%d,%d], \"S6\":[%d,%d,%d,%d], \"S7\":[%d,%d,%d,%d], \"S8\":[%d,%d,%d,%d], \"S9\":[%d,%d,%d,%d], \"S10\":[%d,%d,%d,%d], \"S11\":[%d,%d,%d,%d]} ",scale_data,sensor0.x,sensor0.y,sensor0.z,sensor0.w, sensor1.x,sensor1.y,sensor1.z,sensor1.w,sensor2.x,sensor2.y,sensor2.z,sensor2.w,sensor3.x,sensor3.y,sensor3.z,sensor3.w,sensor4.x,sensor4.y,sensor4.z,sensor4.w,sensor5.x,sensor5.y,sensor5.z,sensor5.w,sensor6.x,sensor6.y,sensor6.z,sensor6.w,sensor7.x,sensor7.y,sensor7.z,sensor7.w,sensor8.x,sensor8.y,sensor8.z,sensor8.w,sensor9.x,sensor9.y,sensor9.z,sensor9.w,sensor10.x,sensor10.y,sensor10.z,sensor10.w,sensor11.x,sensor11.y,sensor11.z,sensor11.w);
-//  sprintf(buffer, "{\"SC\":[%d], \"S0\":[%d,%d,%d,%d], \"S1\":[%d,%d,%d], \"S2\":[%d,%d,%d], \"S3\":[%d,%d,%d], \"S4\":[%d,%d,%d], \"S5\":[%d,%d,%d], \"S6\":[%d,%d,%d], \"S7\":[%d,%d,%d], \"S8\":[%d,%d,%d], \"S9\":[%d,%d,%d], \"S10\":[%d,%d,%d], \"S11\":[%d,%d,%d]} ",scale_data,sensor0.ox,sensor0.oy,sensor0.oz,sensor1.ox,sensor1.oy,sensor1.oz,sensor2.ox,sensor2.oy,sensor2.oz,sensor3.ox,sensor3.oy,sensor3.oz,sensor4.ox,sensor4.oy,sensor4.oz,sensor5.ox,sensor5.oy,sensor5.oz,sensor6.ox,sensor6.oy,sensor6.oz,sensor7.ox,sensor7.oy,sensor7.oz,sensor8.ox,sensor8.oy,sensor8.oz,sensor9.ox,sensor9.oy,sensor9.oz,sensor10.ox,sensor10.oy,sensor10.oz,sensor11.ox,sensor11.oy,sensor11.oz);
-//  sprintf(buffer, "{\"SC\":[%d], \"S0\":[%d,%d,%d,%d], \"S1\":[%d,%d,%d,%d]} ",scale_data,sensor0.x,sensor0.y,sensor0.z,sensor0.w,sensor1.x,sensor1.y,sensor1.z,sensor1.w);
-  //sprintf(buffer, "{\"SC\":[%d], \"S0\":[%d,%d,%d], \"S1\":[%d,%d,%d], \"S2\":[%d,%d,%d], \"S3\":[%d,%d,%d], \"S4\":[%d,%d,%d], \"S5\":[%d,%d,%d], \"S6\":[%d,%d,%d], \"S7\":[%d,%d,%d], \"S8\":[%d,%d,%d], \"S9\":[%d,%d,%d], \"S10\":[%d,%d,%d], \"S11\":[%d,%d,%d], \"ST\":[%d,%d,%d]} ",
-  //                  scale_data, i++,101,102,sensor0.ox,sensor0.oy,sensor0.oz,120,121,122,130,131,132,140,141,142,150,151,152,160,161,162,170,171,172,180,181,182,190,191,192,200,201,202,210,211,212,220,221,222);
 
-  Serial.println(buffer_data);
-  //Serial.write(0x0D);
-  //Serial.write(0x0A);
-  sensorOutputs cal9;
-  sensorOutputs cal8;
-  cal9=imu_sensor9.read_calibration_status();
-  cal8=imu_sensor8.read_calibration_status();
+    char my_buffer[200];
+    sprintf(my_buffer, "{\"S0\":[%d,%d,%d,%d], \"S1\":[%d,%d,%d,%d], \"S2\":[%d,%d,%d,%d], \"S3\":[%d,%d,%d,%d] }",sensor0.x,sensor0.y,sensor0.z,sensor0.w, sensor1.x,sensor1.y,sensor1.z,sensor1.w,sensor2.x,sensor2.y,sensor2.z,sensor2.w,sensor3.x,sensor3.y,sensor3.z,sensor3.w);
+    Serial.println(my_buffer);
 
-  char buffer_cal[300];
-  sprintf(buffer_cal, "{ \"C8\":[%d,%d,%d,%d], \"C9\":[%d,%d,%d,%d]} ",cal8.x,cal8.y,cal8.z,cal8.w, cal9.x,cal9.y,cal9.z,cal9.w);
-  Serial.println(buffer_cal);
-  
+    sensorOutputs cal0=imu_sensor0.read_calibration_status();
+    sensorOutputs cal1=imu_sensor1.read_calibration_status();
+    sensorOutputs cal2=imu_sensor2.read_calibration_status();
+    sensorOutputs cal3=imu_sensor3.read_calibration_status();
 
-delay(BNO055_SAMPLERATE_DELAY_MS);
+
+    char buffer_cal[300];
+    sprintf(buffer_cal, "{ \"C0\":[%d,%d,%d,%d], \"C1\":[%d,%d,%d,%d], \"C2\":[%d,%d,%d,%d], \"C3\":[%d,%d,%d,%d]} ",cal0.x,cal0.y,cal0.z,cal0.w, cal1.x,cal1.y,cal1.z,cal1.w, cal2.x,cal2.y,cal2.z,cal2.w, cal3.x,cal3.y,cal3.z,cal3.w);
+    Serial.println(buffer_cal);
+    delay(BNO055_SAMPLERATE_DELAY_MS);
     
 }
 
