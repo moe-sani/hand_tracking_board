@@ -23,7 +23,7 @@ author's permission is required for any kind of partial or whole usage or distri
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
-//#include "wiring_private.h"
+#include "wiring_private.h"
 
 ///#include <Adafruit_Sensor.h>
 //#in/clude <utility/imumaths.h>
