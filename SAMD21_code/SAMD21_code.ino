@@ -1,5 +1,17 @@
+
+
+
 /**************************************************************************/
 /*
+# license removed for brevity
+'''
+author: Mohammad Fattahi Sani
+email: fattahi.m91@gmail.com
+this code is provided only for SMARTsurg's Internal refrence.
+author's permission is required for any kind of partial or whole usage or distribution.
+'''
+
+
     IMU SerialUSB CODE
 
 */
@@ -11,7 +23,7 @@
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
-#include "wiring_private.h"
+//#include "wiring_private.h"
 
 ///#include <Adafruit_Sensor.h>
 //#in/clude <utility/imumaths.h>
@@ -38,13 +50,7 @@ static const adafruit_bno055_offsets_t Predefined_Calibration[]= {{21975, 0, 392
                                                                     {18, -18, 12, -150, -307, -470 , -1, 0, -1 , 1000, 742},//2
                                                                     { 24, 39, 10 , -761, -438, 305 , 2, 1, 3 , 1000, 947},//3
                                                                     { 5, 35, 10 , -387, -216, -525 , -2, -2, 1 , 1000, 573},//4
-                                                                    {-7, 24, 10 , 813, 403, -29 , -2, -1, -1 , 1000, 570},//5
-                                                                    {16, 26, 15 , -52, -77, -578 , 0, 0, 0 , 1000, 556},//6
-                                                                    {-7, 56, 1 , 263, 150, -383 , -3, -4, 0 , 1000, 541},//7
-                                                                    {14, -6, 17 , -1055, 257, 742 , -1, -1, -1 , 1000, 576},//8
-                                                                    {14, -6, 17 , -1051, 263, 740, -1, -1, -1 , 1000, 596},//9
-                                                                    {11, 21, 35 , -86, 122, -872 , -2, -2, 0 , 1000, 646},//10
-                                                                    {11, 21, 35 , -79, 114, -865 , -2, -2, 0 , 1000, 704}};//11
+                                                                    {-7, 24, 10 , 813, 403, -29 , -2, -1, -1 , 1000, 570}};//5
 
 float sensorA_OX;
 float sensorA_OY;
@@ -316,8 +322,7 @@ void setup(void)
   pinPeripheral(PIN_SCL2, PIO_SERCOM);
 
   SerialUSB.begin(230400);
-  SerialUSB.println("SMARTsurg ExoEskeleton board--- new version");  SerialUSB.println("");
-  SerialUSB.println("hellowwwwwwwwwwwwwwwwwwwwwwwwwww");
+  SerialUSB.println("SMARTsurg ExoEskeleton board--- red_55");  SerialUSB.println("");
   //test SerialUSB port
   delay(1000);
   SerialUSB.println("5");
@@ -330,8 +335,6 @@ void setup(void)
     delay(1000);
   SerialUSB.println("1");
 
-
-    SerialUSB.println("test wire2");
     SerialUSB.println("WHOAMI register reply:");
 
     for (int i=0;i<255;i++)
@@ -346,20 +349,20 @@ void setup(void)
         value = Wire.read();
         SerialUSB.print("reply:");
         SerialUSB.println(value);         // print the character
-
+        delay(50);
     }
 
-    SerialUSB.println("BNO test:");
-  Adafruit_BNO055 bno = Adafruit_BNO055(20, 0x45, &Wire2); //next line will hang if this is on wire2, but it is fine when it is on wire!
-  if(!bno.begin())
-  {
-    SerialUSB.print("Ooo00000000000000ps, no BNO055 detected ");
-    SerialUSB.println(" ");
-  }
-  else
-  {
-    SerialUSB.println("This sensor is alive!");
-  }
+//    SerialUSB.println("BNO test:");
+//  Adafruit_BNO055 bno = Adafruit_BNO055(20, 0x45, &Wire2); //next line will hang if this is on wire2, but it is fine when it is on wire!
+//  if(!bno.begin())
+//  {
+//    SerialUSB.print("Ooo00000000000000ps, no BNO055 detected ");
+//    SerialUSB.println(" ");
+//  }
+//  else
+//  {
+//    SerialUSB.println("This sensor is alive!");
+//  }
   
   delay(1000);
 
@@ -403,12 +406,12 @@ void setup(void)
     SerialUSB.println(my_buffer);
     //SerialUSB.write(0x0D);
     //SerialUSB.write(0x0A);
-    sensorOutputs cal0;
-    sensorOutputs cal1;
-    sensorOutputs cal2;
-    sensorOutputs cal3;
+    sensorOutputs cal0=imu_sensor0.read_calibration_status();
+    sensorOutputs cal1=imu_sensor1.read_calibration_status();
+    sensorOutputs cal2=imu_sensor2.read_calibration_status();
+    sensorOutputs cal3=imu_sensor3.read_calibration_status();
 
-    char buffer_cal[300];
+    char buffer_cal[200];
     sprintf(buffer_cal, "{ \"C0\":[%d,%d,%d,%d], \"C1\":[%d,%d,%d,%d], \"C2\":[%d,%d,%d,%d], \"C3\":[%d,%d,%d,%d]} ",cal0.x,cal0.y,cal0.z,cal0.w, cal1.x,cal1.y,cal1.z,cal1.w, cal2.x,cal2.y,cal2.z,cal2.w, cal3.x,cal3.y,cal3.z,cal3.w);
     SerialUSB.println(buffer_cal);
 
