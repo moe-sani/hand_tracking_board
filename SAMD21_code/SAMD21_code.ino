@@ -50,7 +50,8 @@ static const adafruit_bno055_offsets_t Predefined_Calibration[]= {{21975, 0, 392
                                                                     {18, -18, 12, -150, -307, -470 , -1, 0, -1 , 1000, 742},//2
                                                                     { 24, 39, 10 , -761, -438, 305 , 2, 1, 3 , 1000, 947},//3
                                                                     { 5, 35, 10 , -387, -216, -525 , -2, -2, 1 , 1000, 573},//4
-                                                                    {-7, 24, 10 , 813, 403, -29 , -2, -1, -1 , 1000, 570}};//5
+                                                                    { 5, 35, 10 , -387, -216, -525 , -2, -2, 1 , 1000, 573},//5
+                                                                    {-7, 24, 10 , 813, 403, -29 , -2, -1, -1 , 1000, 570}};//6
 
 float sensorA_OX;
 float sensorA_OY;
@@ -299,6 +300,9 @@ imu_sensor imu_sensor0=imu_sensor(0,0,0x48);
 imu_sensor imu_sensor1=imu_sensor(1,0,0x28);
 imu_sensor imu_sensor2=imu_sensor(2,0,0x47);
 imu_sensor imu_sensor3=imu_sensor(3,0,0x27);
+imu_sensor imu_sensor4=imu_sensor(4,0,0x2C);
+imu_sensor imu_sensor5=imu_sensor(5,0,0x21);
+imu_sensor imu_sensor6=imu_sensor(6,0,0x68);
 
 
 /**************************************************************************/
@@ -370,12 +374,18 @@ void setup(void)
   imu_sensor1.init();
   imu_sensor2.init();
   imu_sensor3.init();
+  imu_sensor4.init();
+  imu_sensor5.init();
+  imu_sensor6.init();
 
   delay(1000);
   imu_sensor0.calibrate();
   imu_sensor1.calibrate();
   imu_sensor2.calibrate();
   imu_sensor3.calibrate();
+  imu_sensor4.calibrate();
+  imu_sensor5.calibrate();
+  imu_sensor6.calibrate();
 
 }
 /**************************************************************************/
@@ -393,15 +403,21 @@ void setup(void)
     sensorOutputs sensor1;
     sensorOutputs sensor2;
     sensorOutputs sensor3;
+    sensorOutputs sensor4;
+    sensorOutputs sensor5;
+    sensorOutputs sensor6;
 
     sensor0=imu_sensor0.read();
     sensor1=imu_sensor1.read();
     sensor2=imu_sensor2.read();
     sensor3=imu_sensor3.read();
+    sensor4=imu_sensor4.read();
+    sensor5=imu_sensor5.read();
+    sensor6=imu_sensor6.read();
 
 
     char my_buffer[200];
-    sprintf(my_buffer, "{\"S0\":[%d,%d,%d,%d], \"S1\":[%d,%d,%d,%d], \"S2\":[%d,%d,%d,%d], \"S3\":[%d,%d,%d,%d] }",sensor0.x,sensor0.y,sensor0.z,sensor0.w, sensor1.x,sensor1.y,sensor1.z,sensor1.w,sensor2.x,sensor2.y,sensor2.z,sensor2.w,sensor3.x,sensor3.y,sensor3.z,sensor3.w);
+    sprintf(my_buffer, "{\"S0\":[%d,%d,%d,%d], \"S1\":[%d,%d,%d,%d], \"S2\":[%d,%d,%d,%d], \"S3\":[%d,%d,%d,%d], \"S4\":[%d,%d,%d,%d], \"S5\":[%d,%d,%d,%d], \"S6\":[%d,%d,%d,%d] }",sensor0.x,sensor0.y,sensor0.z,sensor0.w, sensor1.x,sensor1.y,sensor1.z,sensor1.w,sensor2.x,sensor2.y,sensor2.z,sensor2.w,sensor3.x,sensor3.y,sensor3.z,sensor3.w,sensor4.x,sensor4.y,sensor4.z,sensor4.w,sensor5.x,sensor5.y,sensor5.z,sensor5.w,sensor6.x,sensor6.y,sensor6.z,sensor6.w);
 
     SerialUSB.println(my_buffer);
     //SerialUSB.write(0x0D);
@@ -410,9 +426,12 @@ void setup(void)
     sensorOutputs cal1=imu_sensor1.read_calibration_status();
     sensorOutputs cal2=imu_sensor2.read_calibration_status();
     sensorOutputs cal3=imu_sensor3.read_calibration_status();
+    sensorOutputs cal4=imu_sensor4.read_calibration_status();
+    sensorOutputs cal5=imu_sensor5.read_calibration_status();
+    sensorOutputs cal6=imu_sensor6.read_calibration_status();
 
     char buffer_cal[200];
-    sprintf(buffer_cal, "{ \"C0\":[%d,%d,%d,%d], \"C1\":[%d,%d,%d,%d], \"C2\":[%d,%d,%d,%d], \"C3\":[%d,%d,%d,%d]} ",cal0.x,cal0.y,cal0.z,cal0.w, cal1.x,cal1.y,cal1.z,cal1.w, cal2.x,cal2.y,cal2.z,cal2.w, cal3.x,cal3.y,cal3.z,cal3.w);
+    sprintf(buffer_cal, "{ \"C0\":[%d,%d,%d,%d], \"C1\":[%d,%d,%d,%d], \"C2\":[%d,%d,%d,%d], \"C3\":[%d,%d,%d,%d] , \"C4\":[%d,%d,%d,%d], \"C5\":[%d,%d,%d,%d], \"C6\":[%d,%d,%d,%d]} ",cal0.x,cal0.y,cal0.z,cal0.w, cal1.x,cal1.y,cal1.z,cal1.w, cal2.x,cal2.y,cal2.z,cal2.w, cal3.x,cal3.y,cal3.z,cal3.w, cal4.x,cal4.y,cal4.z,cal4.w, cal5.x,cal5.y,cal5.z,cal5.w, cal6.x,cal6.y,cal6.z,cal6.w);
     SerialUSB.println(buffer_cal);
 
     delay(SAMPLERATE_DELAY_MS);
