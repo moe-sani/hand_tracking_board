@@ -4,14 +4,25 @@
     hardware version: RT Exo Data v1.0
     Processor: Arduino M0 Pro (Native USB)
     
-This version is customized for reading 4 BNO55 sensors. The software only reads I2C zero wich is connected to the connectors on the bottom left of the board ( when holding it with usb on the right side)
+This version is customized for reading 7 BNO55 sensors. The software only reads I2C zero wich is connected to the connectors on the bottom left of the board ( when holding it with usb on the right side)
 
 ![Alt text](red_55.jpg?raw=true "Title")
 
 the sensors must have I2C address translator chip on them. The address on the chip can be selected using the provided resistor values.
 
-The specific address for each sensor board then should be provided to the software at initializing step of the software.
 
+
+The specific address for each sensor board then should be provided to the software at initializing step of the software. Following is showing how you can set diffrent sensor addresses to the board:
+
+    imu_sensor imu_sensor0=imu_sensor(0,0,0x48);
+    imu_sensor imu_sensor1=imu_sensor(1,0,0x28);
+    imu_sensor imu_sensor2=imu_sensor(2,0,0x47);
+    imu_sensor imu_sensor3=imu_sensor(3,0,0x27);
+    imu_sensor imu_sensor4=imu_sensor(4,0,0x2C);
+    imu_sensor imu_sensor5=imu_sensor(5,0,0x21);
+    imu_sensor imu_sensor6=imu_sensor(6,0,0x68);
+
+This means that for example sensor0 has the address of 0x48. So that specific sensor has be located on the hand on the location defined for sensor0.
 ## How To Program:
 
 1. you must have arduino program installed on your computer.
