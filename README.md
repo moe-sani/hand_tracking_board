@@ -3,7 +3,21 @@
     branch name: red_55
     hardware version: RT Exo Data v1.0
     Processor: Arduino M0 Pro (Native USB)
-    
+
+* author: Mohammad Fattahi Sani
+* Email: fattahi.m91@gmail.com
+
+----------
+
+ This package contains the following branches: 
+ * red_55 : this is the branch for teleoperating the davinci and 3 finger tools. this is for small boards
+ * master: this branch was used to collect data in surgical tests using 11 sensors and old board with multiplexr
+ * red_80 :  small board configured to work with BNO080 sensors (not finalized yet)
+ * DEV_BNO080 :  the vidor4000 board configured to work with BNO080 sensors (not finalized yet)
+
+----------
+
+
 This version is customized for reading 7 BNO55 sensors. The software only reads I2C zero wich is connected to the connectors on the bottom left of the board ( when holding it with usb on the right side)
 
 ![Alt text](red_55.jpg?raw=true "Title")
