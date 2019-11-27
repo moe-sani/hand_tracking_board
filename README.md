@@ -22,9 +22,11 @@ This version is customized for reading 7 BNO55 sensors. The software only reads 
 
 ![Alt text](red_55.jpg?raw=true "Title")
 
+## Sensors:
+
 the sensors must have I2C address translator chip on them. The address on the chip can be selected using the provided resistor values.
 
-
+![Alt text](sensors.jpg?raw=true "Title")
 
 The specific address for each sensor board then should be provided to the software at initializing step of the software. Following is showing how you can set diffrent sensor addresses to the board:
 
